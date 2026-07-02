@@ -19,6 +19,10 @@ import com.lawyercasediary.di.AppContainer
 sealed class Screen(val route: String) {
     object Login : Screen("login")
     object Register : Screen("register")
+    object ForgotPassword : Screen("forgot_password")
+    object VerifyEmail : Screen("verify_email/{email}") {
+        fun createRoute(email: String) = "verify_email/${java.net.URLEncoder.encode(email, "UTF-8")}"
+    }
     object Dashboard : Screen("dashboard")
     object CaseList : Screen("cases")
     object CaseDetail : Screen("case_detail/{id}") {
@@ -61,19 +65,47 @@ fun AppNavigation(
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 },
-                onNavigateToRegister = { navController.navigate(Screen.Register.route) }
+                onNavigateToRegister = { navController.navigate(Screen.Register.route) },
+                onNavigateToForgotPassword = { navController.navigate(Screen.ForgotPassword.route) }
             )
         }
         
         composable(Screen.Register.route) {
             RegisterScreen(
                 viewModel = RegisterViewModel(container.authRepository),
-                onRegisterSuccess = { 
-                    navController.navigate(Screen.Dashboard.route) {
+                onRegisterSuccess = { email ->
+                    navController.navigate(Screen.VerifyEmail.createRoute(email)) {
                         popUpTo(Screen.Register.route) { inclusive = true }
                     }
                 },
                 onNavigateToLogin = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.ForgotPassword.route) {
+            ForgotPasswordScreen(
+                viewModel = ForgotPasswordViewModel(container.authRepository),
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.VerifyEmail.route,
+            arguments = listOf(navArgument("email") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val encodedEmail = backStackEntry.arguments?.getString("email") ?: ""
+            val email = java.net.URLDecoder.decode(encodedEmail, "UTF-8")
+            VerifyEmailScreen(
+                email = email,
+                viewModel = VerifyViewModel(container.authRepository),
+                onVerified = {
+                    // Verifying doesn't create a full (refreshable) session — see
+                    // register/route.ts, that's issued on login only — so send
+                    // the user to Login to actually establish one.
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.VerifyEmail.route) { inclusive = true }
+                    }
+                }
             )
         }
 

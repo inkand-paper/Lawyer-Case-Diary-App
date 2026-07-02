@@ -13,6 +13,9 @@ import retrofit2.http.*
  *   POST   api/auth/register
  *   POST   api/auth/refresh
  *   POST   api/auth/logout
+ *   POST   api/auth/forgot-password
+ *   POST   api/auth/resend-verification
+ *   POST   api/auth/verify
  *   GET    api/me
  *   PATCH  api/me
  *   GET    api/cases?search=&status=
@@ -53,6 +56,18 @@ interface ApiService {
 
     @POST("api/auth/logout")
     suspend fun logout(): Response<ApiResponse<Unit>>
+
+    /** POST /api/auth/forgot-password → always 200 (never reveals if the account exists) */
+    @POST("api/auth/forgot-password")
+    suspend fun forgotPassword(@Body request: ForgotPasswordRequest): Response<ApiResponse<Unit>>
+
+    /** POST /api/auth/resend-verification → sends a fresh 6-digit code, valid 24h */
+    @POST("api/auth/resend-verification")
+    suspend fun resendVerification(@Body request: ResendVerificationRequest): Response<ApiResponse<Unit>>
+
+    /** POST /api/auth/verify → { email, code } */
+    @POST("api/auth/verify")
+    suspend fun verifyEmail(@Body request: VerifyEmailRequest): Response<ApiResponse<Unit>>
 
     // ─── PROFILE ──────────────────────────────────────────────────────────────
 

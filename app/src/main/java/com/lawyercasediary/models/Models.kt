@@ -57,6 +57,22 @@ data class TokenResponse(
     val refreshToken: String? = null
 )
 
+/** POST /api/auth/forgot-password — { email } */
+data class ForgotPasswordRequest(
+    val email: String
+)
+
+/** POST /api/auth/resend-verification — { email } */
+data class ResendVerificationRequest(
+    val email: String
+)
+
+/** POST /api/auth/verify — { email, code } */
+data class VerifyEmailRequest(
+    val email: String,
+    val code: String
+)
+
 // ─── USER PROFILE ──────────────────────────────────────────────────────────────
 
 /**

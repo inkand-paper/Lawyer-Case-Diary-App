@@ -43,7 +43,7 @@ class RegisterViewModel(private val repository: AuthRepository) : ViewModel() {
 @Composable
 fun RegisterScreen(
     viewModel: RegisterViewModel,
-    onRegisterSuccess: () -> Unit,
+    onRegisterSuccess: (email: String) -> Unit,
     onNavigateToLogin: () -> Unit
 ) {
     var name by remember { mutableStateOf("") }
@@ -106,7 +106,7 @@ fun RegisterScreen(
             Button(
                 onClick = { 
                     if (name.isNotBlank() && email.isNotBlank() && password.length >= 8) {
-                        viewModel.register(name, email, password, onRegisterSuccess)
+                        viewModel.register(name, email, password) { onRegisterSuccess(email) }
                     } else if (password.length < 8) {
                         // Local validation check
                     }

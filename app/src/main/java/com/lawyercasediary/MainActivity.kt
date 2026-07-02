@@ -58,7 +58,13 @@ class MainActivity : ComponentActivity() {
                     container.sessionManager.accessToken.collect { token ->
                         if ((token.isNullOrBlank() || token == "null") && startDestination != null) {
                             val currentRoute = navController.currentDestination?.route
-                            if (currentRoute != Screen.Login.route && currentRoute != Screen.Register.route) {
+                            val preAuthRoutes = setOf(
+                                Screen.Login.route,
+                                Screen.Register.route,
+                                Screen.ForgotPassword.route,
+                                Screen.VerifyEmail.route
+                            )
+                            if (currentRoute !in preAuthRoutes) {
                                 navController.navigate(Screen.Login.route) {
                                     popUpTo(0) { inclusive = true }
                                 }

@@ -47,7 +47,8 @@ class LoginViewModel(private val repository: AuthRepository) : ViewModel() {
 fun LoginScreen(
     viewModel: LoginViewModel,
     onLoginSuccess: () -> Unit,
-    onNavigateToRegister: () -> Unit
+    onNavigateToRegister: () -> Unit,
+    onNavigateToForgotPassword: () -> Unit
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -100,6 +101,10 @@ fun LoginScreen(
 
             TextButton(onClick = onNavigateToRegister) {
                 Text("New practitioner? Create Account")
+            }
+
+            TextButton(onClick = onNavigateToForgotPassword) {
+                Text("Forgot Password?")
             }
         }
     }
