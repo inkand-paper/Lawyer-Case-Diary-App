@@ -3,6 +3,33 @@ plugins {
     alias(libs.plugins.kotlin.android)
 }
 
+// Release signing reads from keystore.properties, a file that is NEVER
+// committed (see .gitignore) and must exist only on your own machine / CI
+// secret store. This lets the build stay functional (for debug builds and
+// anyone else who clones the repo) even without that file present — it
+// just silently skips configuring release signing, which will surface as
+// a clear Gradle error only if you actually try to build a signed release.
+//
+// To create yours:
+//   1. keytool -genkeypair -v -keystore release-keystore.jks -keyalg RSA \
+//        -keysize 2048 -validity 10000 -alias lawyercasediary
+//      (pick a strong password when prompted — write it down somewhere
+//      safe, e.g. a password manager; there's no recovery if you lose it)
+//   2. Move release-keystore.jks somewhere outside the repo, or make sure
+//      it stays untracked (the .gitignore pattern *.jks covers it either way)
+//   3. Create keystore.properties in the project root (same level as this
+//      file) with:
+//        storeFile=/absolute/path/to/release-keystore.jks
+//        storePassword=your-store-password
+//        keyAlias=lawyercasediary
+//        keyPassword=your-key-password
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = java.util.Properties()
+val hasSigningConfig = keystorePropertiesFile.exists()
+if (hasSigningConfig) {
+    keystoreProperties.load(java.io.FileInputStream(keystorePropertiesFile))
+}
+
 android {
     namespace = "com.lawyercasediary"
     compileSdk = 34
@@ -20,6 +47,17 @@ android {
         }
     }
 
+    signingConfigs {
+        if (hasSigningConfig) {
+            create("release") {
+                storeFile = file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as String
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -27,6 +65,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            if (hasSigningConfig) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
     compileOptions {
@@ -38,6 +79,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.11"

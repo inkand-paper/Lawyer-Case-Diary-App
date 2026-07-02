@@ -1,5 +1,6 @@
 package com.lawyercasediary.api
 
+import com.lawyercasediary.BuildConfig
 import com.lawyercasediary.auth.SessionManager
 import com.lawyercasediary.auth.TokenRefreshAuthenticator
 import okhttp3.OkHttpClient
@@ -19,7 +20,14 @@ object RetrofitClient {
 
     fun create(sessionManager: SessionManager, cookieJar: SessionCookieJar): ApiService {
         val logging = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
+            // BODY-level logging prints full request/response payloads — including
+            // login passwords, JWTs, and refresh tokens — to Logcat. That's fine
+            // for a debug build on your own device, but a release build is
+            // readable via `adb logcat` (or by any log-scraping tool/crash
+            // reporter) on any user's phone. This is a legal-records app, so
+            // that's not a minor issue. Only NONE in release builds.
+            level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY
+                     else HttpLoggingInterceptor.Level.NONE
         }
 
         // Lazy initializer for ApiService to prevent circular dependency with Authenticator

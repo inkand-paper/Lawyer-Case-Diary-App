@@ -13,3 +13,10 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Release signing — NEVER commit these. Losing the keystore means you can
+# never publish an update to an existing Play Store listing under the same
+# app again (Google can't recover or reset it for you).
+keystore.properties
+*.jks
+*.keystore

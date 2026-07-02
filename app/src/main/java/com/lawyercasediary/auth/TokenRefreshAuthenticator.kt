@@ -19,6 +19,15 @@ class TokenRefreshAuthenticator(
 ) : Authenticator {
 
     override fun authenticate(route: Route?, response: Response): Request? {
+        // Standard OkHttp Authenticator guard: without this, if the backend
+        // ever returns a 401 again on the retried request (e.g. clock skew
+        // making the "refreshed" token look expired too), OkHttp will call
+        // authenticate() again and this would refresh forever. Two attempts
+        // is the conventional limit — see OkHttp's own authenticator recipes.
+        if (responseCount(response) >= 2) {
+            return null
+        }
+
         // Don't try to refresh if we're already on the refresh endpoint (prevents infinite loops)
         if (response.request.url.encodedPath.contains("api/auth/refresh")) {
             return null
@@ -62,5 +71,18 @@ class TokenRefreshAuthenticator(
             runBlocking { sessionManager.clearSession() }
             null
         }
+    }
+
+    // OkHttp's Response has no built-in attempt counter; walk the
+    // priorResponse chain to build one. Standard pattern from OkHttp's own
+    // authenticator recipes.
+    private fun responseCount(response: Response): Int {
+        var result = 1
+        var priorResponse = response.priorResponse
+        while (priorResponse != null) {
+            result++
+            priorResponse = priorResponse.priorResponse
+        }
+        return result
     }
 }
