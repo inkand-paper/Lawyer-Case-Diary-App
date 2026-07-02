@@ -1,6 +1,7 @@
 package com.lawyercasediary.repository
 
 import com.lawyercasediary.api.ApiService
+import com.lawyercasediary.api.parsedErrorMessage
 import com.lawyercasediary.auth.SessionManager
 import com.lawyercasediary.models.*
 
@@ -23,7 +24,7 @@ class AuthRepository(
                     ApiResult.Error(response.code(), "Empty response from server")
                 }
             } else {
-                ApiResult.Error(response.code(), response.body()?.message ?: response.message())
+                ApiResult.Error(response.code(), response.parsedErrorMessage(response.message()))
             }
         } catch (e: Exception) {
             ApiResult.Error(-1, e.message ?: "Authentication failed")
@@ -42,7 +43,7 @@ class AuthRepository(
                     ApiResult.Error(response.code(), "Empty response from server")
                 }
             } else {
-                ApiResult.Error(response.code(), response.body()?.message ?: response.message())
+                ApiResult.Error(response.code(), response.parsedErrorMessage(response.message()))
             }
         } catch (e: Exception) {
             ApiResult.Error(-1, e.message ?: "Registration failed")
@@ -68,7 +69,7 @@ class AuthRepository(
                     ApiResult.Error(response.code(), "Profile data missing")
                 }
             } else {
-                ApiResult.Error(response.code(), response.body()?.message ?: response.message())
+                ApiResult.Error(response.code(), response.parsedErrorMessage(response.message()))
             }
         } catch (e: Exception) {
             ApiResult.Error(-1, e.message ?: "Profile sync failed")
@@ -83,7 +84,7 @@ class AuthRepository(
                 if (data != null) ApiResult.Success(data)
                 else ApiResult.Error(response.code(), "Empty response")
             } else {
-                ApiResult.Error(response.code(), response.body()?.message ?: response.message())
+                ApiResult.Error(response.code(), response.parsedErrorMessage(response.message()))
             }
         } catch (e: Exception) {
             ApiResult.Error(-1, e.message ?: "Update failed")

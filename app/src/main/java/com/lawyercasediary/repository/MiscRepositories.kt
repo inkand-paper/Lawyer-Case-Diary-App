@@ -1,6 +1,7 @@
 package com.lawyercasediary.repository
 
 import com.lawyercasediary.api.ApiService
+import com.lawyercasediary.api.parsedErrorMessage
 import com.lawyercasediary.models.*
 
 // ─── Helper to safely extract body data ───────────────────────────────────────
@@ -13,7 +14,7 @@ private fun <T> safeExtract(
         if (data != null) ApiResult.Success(data)
         else ApiResult.Error(response.code(), "Empty response from server.")
     } else {
-        ApiResult.Error(response.code(), response.body()?.message ?: fallback)
+        ApiResult.Error(response.code(), response.parsedErrorMessage(fallback))
     }
 }
 
@@ -26,7 +27,7 @@ class HearingRepository(private val apiService: ApiService) {
             val response = apiService.getHearings(date, caseId)
             if (response.isSuccessful && response.body()?.success == true)
                 ApiResult.Success(response.body()!!.data ?: emptyList())
-            else ApiResult.Error(response.code(), response.body()?.message ?: response.message())
+            else ApiResult.Error(response.code(), response.parsedErrorMessage(response.message()))
         } catch (e: Exception) { ApiResult.Error(-1, e.message ?: "Network Error") }
     }
 
@@ -46,7 +47,7 @@ class HearingRepository(private val apiService: ApiService) {
         return try {
             val response = apiService.deleteHearing(id)
             if (response.isSuccessful) ApiResult.Success(Unit)
-            else ApiResult.Error(response.code(), response.body()?.message ?: response.message())
+            else ApiResult.Error(response.code(), response.parsedErrorMessage(response.message()))
         } catch (e: Exception) { ApiResult.Error(-1, e.message ?: "Network Error") }
     }
 }
@@ -60,7 +61,7 @@ class ClientRepository(private val apiService: ApiService) {
             val response = apiService.getClients()
             if (response.isSuccessful && response.body()?.success == true)
                 ApiResult.Success(response.body()!!.data ?: emptyList())
-            else ApiResult.Error(response.code(), response.body()?.message ?: response.message())
+            else ApiResult.Error(response.code(), response.parsedErrorMessage(response.message()))
         } catch (e: Exception) { ApiResult.Error(-1, e.message ?: "Network Error") }
     }
 
@@ -86,7 +87,7 @@ class ClientRepository(private val apiService: ApiService) {
         return try {
             val response = apiService.deleteClient(id)
             if (response.isSuccessful) ApiResult.Success(Unit)
-            else ApiResult.Error(response.code(), response.body()?.message ?: response.message())
+            else ApiResult.Error(response.code(), response.parsedErrorMessage(response.message()))
         } catch (e: Exception) { ApiResult.Error(-1, e.message ?: "Network Error") }
     }
 }
@@ -100,7 +101,7 @@ class ChamberRepository(private val apiService: ApiService) {
             val response = apiService.getChamber()
             if (response.isSuccessful && response.body()?.success == true)
                 ApiResult.Success(response.body()!!.data)
-            else ApiResult.Error(response.code(), response.body()?.message ?: response.message())
+            else ApiResult.Error(response.code(), response.parsedErrorMessage(response.message()))
         } catch (e: Exception) { ApiResult.Error(-1, e.message ?: "Network Error") }
     }
 
@@ -115,7 +116,7 @@ class ChamberRepository(private val apiService: ApiService) {
             val response = apiService.getChamberInvites()
             if (response.isSuccessful && response.body()?.success == true)
                 ApiResult.Success(response.body()!!.data ?: emptyList())
-            else ApiResult.Error(response.code(), response.body()?.message ?: response.message())
+            else ApiResult.Error(response.code(), response.parsedErrorMessage(response.message()))
         } catch (e: Exception) { ApiResult.Error(-1, e.message ?: "Network Error") }
     }
 
@@ -129,7 +130,7 @@ class ChamberRepository(private val apiService: ApiService) {
         return try {
             val response = apiService.deleteInvite(id)
             if (response.isSuccessful) ApiResult.Success(Unit)
-            else ApiResult.Error(response.code(), response.body()?.message ?: response.message())
+            else ApiResult.Error(response.code(), response.parsedErrorMessage(response.message()))
         } catch (e: Exception) { ApiResult.Error(-1, e.message ?: "Network Error") }
     }
 }
@@ -143,7 +144,7 @@ class NotificationRepository(private val apiService: ApiService) {
             val response = apiService.getUpcomingNotifications()
             if (response.isSuccessful && response.body()?.success == true)
                 ApiResult.Success(response.body()!!.data ?: emptyList())
-            else ApiResult.Error(response.code(), response.body()?.message ?: response.message())
+            else ApiResult.Error(response.code(), response.parsedErrorMessage(response.message()))
         } catch (e: Exception) { ApiResult.Error(-1, e.message ?: "Network Error") }
     }
 }
@@ -166,7 +167,7 @@ class ReminderRepository(private val apiService: ApiService) {
             val response = apiService.getReminders()
             if (response.isSuccessful && response.body()?.success == true)
                 ApiResult.Success(response.body()!!.data ?: emptyList())
-            else ApiResult.Error(response.code(), response.body()?.message ?: response.message())
+            else ApiResult.Error(response.code(), response.parsedErrorMessage(response.message()))
         } catch (e: Exception) { ApiResult.Error(-1, e.message ?: "Network Error") }
     }
 }
