@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.outlined.Domain
 import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.Mail
@@ -43,7 +44,10 @@ data class ChamberUiState(
     val error: String? = null,
     val chamber: Chamber? = null,
     val invites: List<Invitation> = emptyList(),
-    val profile: UserProfile? = null
+    val profile: UserProfile? = null,
+    val messages: List<ChamberMessage> = emptyList(),
+    val isSendingMessage: Boolean = false,
+    val chatError: String? = null
 )
 
 class ChamberViewModel(
@@ -52,6 +56,7 @@ class ChamberViewModel(
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ChamberUiState(isLoading = true))
     val uiState: StateFlow<ChamberUiState> = _uiState
+    private var pollingJob: kotlinx.coroutines.Job? = null
 
     init { 
         loadChamberData() 
@@ -84,6 +89,47 @@ class ChamberViewModel(
                 invites = invites,
                 error = error
             )
+
+            // Only start polling chat once we know the user is actually in a
+            // chamber — the messages endpoint 403s otherwise on every call.
+            if (chamber != null) startMessagePolling()
+        }
+    }
+
+    private fun startMessagePolling() {
+        if (pollingJob?.isActive == true) return
+        pollingJob = viewModelScope.launch {
+            while (true) {
+                val result = repository.getMessages()
+                if (result is ApiResult.Success) {
+                    _uiState.value = _uiState.value.copy(messages = result.data)
+                }
+                kotlinx.coroutines.delay(5000)
+            }
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        pollingJob?.cancel()
+    }
+
+    fun sendMessage(content: String) {
+        if (content.isBlank()) return
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isSendingMessage = true, chatError = null)
+            when (val result = repository.sendMessage(content)) {
+                is ApiResult.Success -> {
+                    _uiState.value = _uiState.value.copy(
+                        isSendingMessage = false,
+                        messages = _uiState.value.messages + result.data
+                    )
+                }
+                is ApiResult.Error -> {
+                    _uiState.value = _uiState.value.copy(isSendingMessage = false, chatError = result.message)
+                }
+                else -> {}
+            }
         }
     }
 
@@ -190,6 +236,20 @@ fun ChamberScreen(
                                 items(uiState.invites) { invite ->
                                     InviteCard(invite)
                                 }
+                            }
+                            
+                            item {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                SectionTitle("Chamber Chat")
+                            }
+                            item {
+                                ChamberChatSection(
+                                    messages = uiState.messages,
+                                    currentUserId = uiState.profile?.id,
+                                    isSending = uiState.isSendingMessage,
+                                    chatError = uiState.chatError,
+                                    onSend = { viewModel.sendMessage(it) }
+                                )
                             }
                             
                             item { Spacer(modifier = Modifier.height(80.dp)) }
@@ -406,5 +466,110 @@ fun SectionTitle(title: String, isAlert: Boolean = false) {
             fontWeight = FontWeight.ExtraBold,
             color = if (isAlert) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground
         )
+    }
+}
+
+@Composable
+fun ChamberChatSection(
+    messages: List<com.lawyercasediary.models.ChamberMessage>,
+    currentUserId: String?,
+    isSending: Boolean,
+    chatError: String?,
+    onSend: (String) -> Unit
+) {
+    var draft by remember { mutableStateOf("") }
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+
+    LaunchedEffect(messages.size) {
+        if (messages.isNotEmpty()) listState.animateScrollToItem(messages.size - 1)
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            if (messages.isEmpty()) {
+                Text(
+                    "No messages yet. Start the conversation.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.outline,
+                    modifier = Modifier.padding(vertical = 24.dp).fillMaxWidth(),
+                )
+            } else {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxWidth().height(280.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(messages, key = { it.id }) { message ->
+                        val isMine = message.userId == currentUserId
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = if (isMine) Arrangement.End else Arrangement.Start
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth(0.8f)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(
+                                        if (isMine) MaterialTheme.colorScheme.primaryContainer
+                                        else MaterialTheme.colorScheme.surfaceVariant
+                                    )
+                                    .padding(10.dp),
+                                horizontalAlignment = if (isMine) Alignment.End else Alignment.Start
+                            ) {
+                                if (!isMine) {
+                                    Text(
+                                        message.user?.name ?: "Unknown",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                                Text(message.content, style = MaterialTheme.typography.bodyMedium)
+                            }
+                        }
+                    }
+                }
+            }
+
+            chatError?.let {
+                Text(
+                    it,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(
+                    value = draft,
+                    onValueChange = { if (it.length <= 2000) draft = it },
+                    modifier = Modifier.weight(1f),
+                    placeholder = { Text("Message your chamber...") },
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                IconButton(
+                    onClick = {
+                        if (draft.isNotBlank()) {
+                            onSend(draft)
+                            draft = ""
+                        }
+                    },
+                    enabled = !isSending && draft.isNotBlank()
+                ) {
+                    if (isSending) CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                    else Icon(Icons.Default.Send, contentDescription = "Send")
+                }
+            }
+        }
     }
 }
