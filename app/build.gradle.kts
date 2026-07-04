@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -23,11 +26,17 @@ plugins {
 //        storePassword=your-store-password
 //        keyAlias=lawyercasediary
 //        keyPassword=your-key-password
+//
+// NOTE: java.util.Properties() / java.io.FileInputStream(...) as inline
+// fully-qualified references do NOT resolve here — Gradle's Android/Java
+// plugins add a `java` extension accessor at the build-script top level,
+// which shadows the `java` package identifier itself. Explicit imports
+// above are required; this is a Gradle Kotlin DSL quirk, not a typo.
 val keystorePropertiesFile = rootProject.file("keystore.properties")
-val keystoreProperties = java.util.Properties()
+val keystoreProperties = Properties()
 val hasSigningConfig = keystorePropertiesFile.exists()
 if (hasSigningConfig) {
-    keystoreProperties.load(java.io.FileInputStream(keystorePropertiesFile))
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
 android {
