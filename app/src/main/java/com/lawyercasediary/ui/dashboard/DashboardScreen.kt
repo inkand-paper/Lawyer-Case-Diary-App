@@ -1,7 +1,5 @@
 package com.lawyercasediary.ui.dashboard
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -95,8 +93,6 @@ fun DashboardScreen(
     navController: NavController
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var visible by remember { mutableStateOf(false) }
-    LaunchedEffect(uiState.isLoading) { if (!uiState.isLoading) visible = true }
 
     MainScaffold(
         navController = navController,
@@ -107,61 +103,56 @@ fun DashboardScreen(
             if (uiState.isLoading) LoadingSpinner()
             else if (uiState.error != null) ErrorState(uiState.error!!) { viewModel.loadDashboardData() }
             else {
-                AnimatedVisibility(
-                    visible = visible,
-                    enter = fadeIn() + slideInVertically(initialOffsetY = { 40 })
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        item {
-                            WelcomeHeader(uiState.profile)
-                        }
-
-                        item {
-                            PlanBanner(uiState.profile)
-                        }
-
-                        item {
-                            StatsGrid(uiState.stats)
-                        }
-
-                        if (uiState.imminentHearings.isNotEmpty()) {
-                            item {
-                                SectionTitle("Imminent Hearings", isAlert = true)
-                            }
-                            items(uiState.imminentHearings) { alert ->
-                                ImminentAlertCard(alert)
-                            }
-                        }
-                        
-                        if (uiState.reminders.isNotEmpty()) {
-                            item {
-                                SectionTitle("Recent Reminders")
-                            }
-                            items(uiState.reminders) { reminder ->
-                                ReminderItem(reminder)
-                            }
-                        }
-                        
-                        item {
-                            SectionTitle("Today's Cause List")
-                        }
-                        
-                        if (uiState.todayHearings.isEmpty()) {
-                            item { 
-                                EmptyStateCard("No hearings scheduled for today.")
-                            }
-                        } else {
-                            items(uiState.todayHearings) { hearing ->
-                                HearingCard(hearing) { /* Open detail */ }
-                            }
-                        }
-                        
-                        item { Spacer(modifier = Modifier.height(32.dp)) }
+                    item {
+                        WelcomeHeader(uiState.profile)
                     }
+
+                    item {
+                        PlanBanner(uiState.profile)
+                    }
+
+                    item {
+                        StatsGrid(uiState.stats)
+                    }
+
+                    if (uiState.imminentHearings.isNotEmpty()) {
+                        item {
+                            SectionTitle("Imminent Hearings", isAlert = true)
+                        }
+                        items(uiState.imminentHearings) { alert ->
+                            ImminentAlertCard(alert)
+                        }
+                    }
+                    
+                    if (uiState.reminders.isNotEmpty()) {
+                        item {
+                            SectionTitle("Recent Reminders")
+                        }
+                        items(uiState.reminders) { reminder ->
+                            ReminderItem(reminder)
+                        }
+                    }
+                    
+                    item {
+                        SectionTitle("Today's Cause List")
+                    }
+                    
+                    if (uiState.todayHearings.isEmpty()) {
+                        item { 
+                            EmptyStateCard("No hearings scheduled for today.")
+                        }
+                    } else {
+                        items(uiState.todayHearings) { hearing ->
+                            HearingCard(hearing) { /* Open detail */ }
+                        }
+                    }
+                    
+                    item { Spacer(modifier = Modifier.height(32.dp)) }
                 }
             }
         }

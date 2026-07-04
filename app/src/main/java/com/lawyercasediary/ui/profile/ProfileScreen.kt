@@ -1,7 +1,5 @@
 package com.lawyercasediary.ui.profile
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -66,8 +64,6 @@ fun ProfileScreen(
     navController: NavController
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var visible by remember { mutableStateOf(false) }
-    LaunchedEffect(uiState.isLoading) { if (!uiState.isLoading) visible = true }
 
     MainScaffold(
         navController = navController,
@@ -78,30 +74,25 @@ fun ProfileScreen(
             if (uiState.isLoading) LoadingSpinner()
             else if (uiState.error != null) ErrorState(uiState.error!!) { viewModel.loadProfile() }
             else if (uiState.profile != null) {
-                AnimatedVisibility(
-                    visible = visible,
-                    enter = fadeIn() + slideInVertically(initialOffsetY = { 20 })
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        item {
-                            ProfileHeader(uiState.profile!!)
-                            Spacer(modifier = Modifier.height(32.dp))
-                        }
-                        
-                        item {
-                            ProfileDetailCard(uiState.profile!!)
-                            Spacer(modifier = Modifier.height(24.dp))
-                        }
-                        
-                        item {
-                            LogoutButton {
-                                navController.navigate(Screen.Login.route) {
-                                    popUpTo(0) { inclusive = true }
-                                }
+                    item {
+                        ProfileHeader(uiState.profile!!)
+                        Spacer(modifier = Modifier.height(32.dp))
+                    }
+                    
+                    item {
+                        ProfileDetailCard(uiState.profile!!)
+                        Spacer(modifier = Modifier.height(24.dp))
+                    }
+                    
+                    item {
+                        LogoutButton {
+                            navController.navigate(Screen.Login.route) {
+                                popUpTo(0) { inclusive = true }
                             }
                         }
                     }

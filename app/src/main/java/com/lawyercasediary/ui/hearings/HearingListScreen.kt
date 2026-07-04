@@ -1,7 +1,5 @@
 package com.lawyercasediary.ui.hearings
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -77,8 +75,6 @@ fun HearingListScreen(
     navController: NavController
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var visible by remember { mutableStateOf(false) }
-    LaunchedEffect(uiState.isLoading) { if (!uiState.isLoading) visible = true }
 
     MainScaffold(
         navController = navController,
@@ -99,23 +95,18 @@ fun HearingListScreen(
             if (uiState.isLoading) LoadingSpinner()
             else if (uiState.error != null) ErrorState(uiState.error!!) { viewModel.loadHearings() }
             else {
-                AnimatedVisibility(
-                    visible = visible,
-                    enter = fadeIn() + slideInVertically(initialOffsetY = { 20 })
-                ) {
-                    if (uiState.hearings.isEmpty()) {
-                        EmptyState("No hearings scheduled.", Icons.Default.Event)
-                    } else {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            items(uiState.hearings) { hearing ->
-                                HearingCard(hearing) { /* Open detail */ }
-                            }
-                            item { Spacer(modifier = Modifier.height(80.dp)) }
+                if (uiState.hearings.isEmpty()) {
+                    EmptyState("No hearings scheduled.", Icons.Default.Event)
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(uiState.hearings) { hearing ->
+                            HearingCard(hearing) { /* Open detail */ }
                         }
+                        item { Spacer(modifier = Modifier.height(80.dp)) }
                     }
                 }
             }

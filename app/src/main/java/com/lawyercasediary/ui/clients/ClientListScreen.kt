@@ -1,7 +1,5 @@
 package com.lawyercasediary.ui.clients
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -91,8 +89,6 @@ fun ClientListScreen(
     navController: NavController
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var visible by remember { mutableStateOf(false) }
-    LaunchedEffect(uiState.isLoading) { if (!uiState.isLoading) visible = true }
 
     val filteredClients = uiState.clients.filter { 
         it.name.contains(uiState.searchQuery, ignoreCase = true) || 
@@ -121,23 +117,18 @@ fun ClientListScreen(
                 if (uiState.isLoading) LoadingSpinner()
                 else if (uiState.error != null) ErrorState(uiState.error!!) { viewModel.loadClients() }
                 else {
-                    androidx.compose.animation.AnimatedVisibility(
-                        visible = visible,
-                        enter = fadeIn() + slideInVertically(initialOffsetY = { 20 })
-                    ) {
-                        if (filteredClients.isEmpty()) {
-                            EmptyState("No clients found.", Icons.Default.People)
-                        } else {
-                            LazyColumn(
-                                modifier = Modifier.fillMaxSize(),
-                                contentPadding = PaddingValues(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                items(filteredClients, key = { it.id }) { client ->
-                                    ClientCard(client) { onClientClick(client.id) }
-                                }
-                                item { Spacer(modifier = Modifier.height(80.dp)) }
+                    if (filteredClients.isEmpty()) {
+                        EmptyState("No clients found.", Icons.Default.People)
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(filteredClients, key = { it.id }) { client ->
+                                ClientCard(client) { onClientClick(client.id) }
                             }
+                            item { Spacer(modifier = Modifier.height(80.dp)) }
                         }
                     }
                 }

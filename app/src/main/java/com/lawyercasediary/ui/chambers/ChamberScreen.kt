@@ -1,7 +1,5 @@
 package com.lawyercasediary.ui.chambers
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -172,8 +170,6 @@ fun ChamberScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showCreateDialog by remember { mutableStateOf(false) }
     var showInviteDialog by remember { mutableStateOf(false) }
-    var visible by remember { mutableStateOf(false) }
-    LaunchedEffect(uiState.isLoading) { if (!uiState.isLoading) visible = true }
 
     MainScaffold(
         navController = navController,
@@ -203,57 +199,52 @@ fun ChamberScreen(
             if (uiState.isLoading) LoadingSpinner()
             else if (uiState.error != null) ErrorState(uiState.error!!) { viewModel.loadChamberData() }
             else {
-                AnimatedVisibility(
-                    visible = visible,
-                    enter = fadeIn() + slideInVertically(initialOffsetY = { 20 })
-                ) {
-                    if (uiState.chamber == null) {
-                        EmptyState("Not a member of any chamber.", Icons.Outlined.Domain)
-                    } else {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
+                if (uiState.chamber == null) {
+                    EmptyState("Not a member of any chamber.", Icons.Outlined.Domain)
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        item {
+                            ChamberHeroCard(uiState.chamber!!)
+                        }
+                        
+                        item {
+                            SectionTitle("Sent Invitations")
+                        }
+                        
+                        if (uiState.invites.isEmpty()) {
                             item {
-                                ChamberHeroCard(uiState.chamber!!)
-                            }
-                            
-                            item {
-                                SectionTitle("Sent Invitations")
-                            }
-                            
-                            if (uiState.invites.isEmpty()) {
-                                item {
-                                    Text(
-                                        "No pending invitations.", 
-                                        style = MaterialTheme.typography.bodyMedium, 
-                                        color = MaterialTheme.colorScheme.outline,
-                                        modifier = Modifier.padding(vertical = 8.dp)
-                                    )
-                                }
-                            } else {
-                                items(uiState.invites) { invite ->
-                                    InviteCard(invite)
-                                }
-                            }
-                            
-                            item {
-                                Spacer(modifier = Modifier.height(8.dp))
-                                SectionTitle("Chamber Chat")
-                            }
-                            item {
-                                ChamberChatSection(
-                                    messages = uiState.messages,
-                                    currentUserId = uiState.profile?.id,
-                                    isSending = uiState.isSendingMessage,
-                                    chatError = uiState.chatError,
-                                    onSend = { viewModel.sendMessage(it) }
+                                Text(
+                                    "No pending invitations.", 
+                                    style = MaterialTheme.typography.bodyMedium, 
+                                    color = MaterialTheme.colorScheme.outline,
+                                    modifier = Modifier.padding(vertical = 8.dp)
                                 )
                             }
-                            
-                            item { Spacer(modifier = Modifier.height(80.dp)) }
+                        } else {
+                            items(uiState.invites) { invite ->
+                                InviteCard(invite)
+                            }
                         }
+                        
+                        item {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            SectionTitle("Chamber Chat")
+                        }
+                        item {
+                            ChamberChatSection(
+                                messages = uiState.messages,
+                                currentUserId = uiState.profile?.id,
+                                isSending = uiState.isSendingMessage,
+                                chatError = uiState.chatError,
+                                onSend = { viewModel.sendMessage(it) }
+                            )
+                        }
+                        
+                        item { Spacer(modifier = Modifier.height(80.dp)) }
                     }
                 }
             }

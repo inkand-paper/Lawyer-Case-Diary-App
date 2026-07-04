@@ -1,7 +1,5 @@
 package com.lawyercasediary.ui.cases
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -93,8 +91,6 @@ fun CaseListScreen(
     navController: NavController
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var visible by remember { mutableStateOf(false) }
-    LaunchedEffect(uiState.isLoading) { if (!uiState.isLoading) visible = true }
 
     MainScaffold(
         navController = navController,
@@ -119,23 +115,18 @@ fun CaseListScreen(
                 if (uiState.isLoading) LoadingSpinner()
                 else if (uiState.error != null) ErrorState(uiState.error!!) { viewModel.loadCases() }
                 else {
-                    androidx.compose.animation.AnimatedVisibility(
-                        visible = visible,
-                        enter = fadeIn() + slideInVertically(initialOffsetY = { 20 })
-                    ) {
-                        if (uiState.cases.isEmpty()) {
-                            EmptyState("No cases matching your search.", Icons.Default.Gavel)
-                        } else {
-                            LazyColumn(
-                                modifier = Modifier.fillMaxSize(),
-                                contentPadding = PaddingValues(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                items(uiState.cases, key = { it.id }) { case ->
-                                    CaseCard(case) { onCaseClick(case.id) }
-                                }
-                                item { Spacer(modifier = Modifier.height(80.dp)) }
+                    if (uiState.cases.isEmpty()) {
+                        EmptyState("No cases matching your search.", Icons.Default.Gavel)
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(uiState.cases, key = { it.id }) { case ->
+                                CaseCard(case) { onCaseClick(case.id) }
                             }
+                            item { Spacer(modifier = Modifier.height(80.dp)) }
                         }
                     }
                 }
