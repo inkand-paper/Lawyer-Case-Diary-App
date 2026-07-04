@@ -107,6 +107,50 @@ interface ApiService {
     @DELETE("api/cases/{id}")
     suspend fun deleteCase(@Path("id") id: String): Response<ApiResponse<Unit>>
 
+    /** POST /api/cases/{id}/notes → Note. Body: NoteRequest */
+    @POST("api/cases/{id}/notes")
+    suspend fun createNote(
+        @Path("id") caseId: String,
+        @Body request: NoteRequest
+    ): Response<ApiResponse<Note>>
+
+    /** PATCH /api/cases/{id}/notes/{noteId} → Note. Body: NoteRequest */
+    @PATCH("api/cases/{id}/notes/{noteId}")
+    suspend fun updateNote(
+        @Path("id") caseId: String,
+        @Path("noteId") noteId: String,
+        @Body request: NoteRequest
+    ): Response<ApiResponse<Note>>
+
+    /** DELETE /api/cases/{id}/notes/{noteId} */
+    @DELETE("api/cases/{id}/notes/{noteId}")
+    suspend fun deleteNote(
+        @Path("id") caseId: String,
+        @Path("noteId") noteId: String
+    ): Response<ApiResponse<Note>>
+
+    /** POST /api/cases/{id}/payments → Payment. Body: CreatePaymentRequest */
+    @POST("api/cases/{id}/payments")
+    suspend fun createPayment(
+        @Path("id") caseId: String,
+        @Body request: CreatePaymentRequest
+    ): Response<ApiResponse<Payment>>
+
+    /** DELETE /api/cases/{id}/payments/{paymentId} */
+    @DELETE("api/cases/{id}/payments/{paymentId}")
+    suspend fun deletePayment(
+        @Path("id") caseId: String,
+        @Path("paymentId") paymentId: String
+    ): Response<ApiResponse<Payment>>
+
+    /**
+     * POST /api/cases/{id}/share → Case. Shares a case with the caller's
+     * chamber. Requires the caller to own the case and be in a chamber;
+     * fails with FORBIDDEN otherwise.
+     */
+    @POST("api/cases/{id}/share")
+    suspend fun shareCaseToChamber(@Path("id") id: String): Response<ApiResponse<Case>>
+
     // ─── HEARINGS ─────────────────────────────────────────────────────────────
 
     /** GET /api/hearings?date=&caseId= → List<Hearing> with case included */
@@ -181,6 +225,14 @@ interface ApiService {
     /** DELETE /api/chambers/invites/{id} */
     @DELETE("api/chambers/invites/{id}")
     suspend fun deleteInvite(@Path("id") id: String): Response<ApiResponse<Unit>>
+
+    /** GET /api/chambers/messages → List<ChamberMessage> (last 50, oldest first) */
+    @GET("api/chambers/messages")
+    suspend fun getChamberMessages(): Response<ApiResponse<List<ChamberMessage>>>
+
+    /** POST /api/chambers/messages → ChamberMessage. Body: { content } (max 2000 chars) */
+    @POST("api/chambers/messages")
+    suspend fun sendChamberMessage(@Body request: ChamberMessageRequest): Response<ApiResponse<ChamberMessage>>
 
     // ─── NOTIFICATIONS ────────────────────────────────────────────────────────
 

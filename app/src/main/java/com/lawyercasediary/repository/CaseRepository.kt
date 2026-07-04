@@ -49,4 +49,57 @@ class CaseRepository(private val apiService: ApiService) {
             else ApiResult.Error(response.code(), response.parsedErrorMessage(response.message()))
         } catch (e: Exception) { ApiResult.Error(-1, e.message ?: "Network Error") }
     }
+
+    suspend fun addNote(caseId: String, content: String): ApiResult<Note> {
+        return try {
+            val response = apiService.createNote(caseId, NoteRequest(content))
+            if (response.isSuccessful && response.body()?.success == true && response.body()!!.data != null)
+                ApiResult.Success(response.body()!!.data!!)
+            else ApiResult.Error(response.code(), response.parsedErrorMessage(response.message()))
+        } catch (e: Exception) { ApiResult.Error(-1, e.message ?: "Network Error") }
+    }
+
+    suspend fun updateNote(caseId: String, noteId: String, content: String): ApiResult<Note> {
+        return try {
+            val response = apiService.updateNote(caseId, noteId, NoteRequest(content))
+            if (response.isSuccessful && response.body()?.success == true && response.body()!!.data != null)
+                ApiResult.Success(response.body()!!.data!!)
+            else ApiResult.Error(response.code(), response.parsedErrorMessage(response.message()))
+        } catch (e: Exception) { ApiResult.Error(-1, e.message ?: "Network Error") }
+    }
+
+    suspend fun deleteNote(caseId: String, noteId: String): ApiResult<Unit> {
+        return try {
+            val response = apiService.deleteNote(caseId, noteId)
+            if (response.isSuccessful) ApiResult.Success(Unit)
+            else ApiResult.Error(response.code(), response.parsedErrorMessage(response.message()))
+        } catch (e: Exception) { ApiResult.Error(-1, e.message ?: "Network Error") }
+    }
+
+    suspend fun addPayment(caseId: String, amount: Double, method: String?): ApiResult<Payment> {
+        return try {
+            val response = apiService.createPayment(caseId, CreatePaymentRequest(amount, method))
+            if (response.isSuccessful && response.body()?.success == true && response.body()!!.data != null)
+                ApiResult.Success(response.body()!!.data!!)
+            else ApiResult.Error(response.code(), response.parsedErrorMessage(response.message()))
+        } catch (e: Exception) { ApiResult.Error(-1, e.message ?: "Network Error") }
+    }
+
+    suspend fun deletePayment(caseId: String, paymentId: String): ApiResult<Unit> {
+        return try {
+            val response = apiService.deletePayment(caseId, paymentId)
+            if (response.isSuccessful) ApiResult.Success(Unit)
+            else ApiResult.Error(response.code(), response.parsedErrorMessage(response.message()))
+        } catch (e: Exception) { ApiResult.Error(-1, e.message ?: "Network Error") }
+    }
+
+    /** Shares a case with the caller's own chamber. Caller must own the case. */
+    suspend fun shareToChamber(caseId: String): ApiResult<Case> {
+        return try {
+            val response = apiService.shareCaseToChamber(caseId)
+            if (response.isSuccessful && response.body()?.success == true && response.body()!!.data != null)
+                ApiResult.Success(response.body()!!.data!!)
+            else ApiResult.Error(response.code(), response.parsedErrorMessage(response.message()))
+        } catch (e: Exception) { ApiResult.Error(-1, e.message ?: "Network Error") }
+    }
 }

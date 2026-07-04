@@ -231,6 +231,11 @@ data class Note(
     val updatedAt: String? = null
 )
 
+/** POST /api/cases/{id}/notes and PATCH /api/cases/{id}/notes/{noteId} — { content } */
+data class NoteRequest(
+    val content: String
+)
+
 // ─── PAYMENT ───────────────────────────────────────────────────────────────────
 
 /** Prisma Payment: id, caseId, amount, paymentDate, method?, status, createdAt, updatedAt */
@@ -243,6 +248,16 @@ data class Payment(
     val status: String = "COMPLETED",
     val createdAt: String? = null,
     val updatedAt: String? = null
+)
+
+/**
+ * POST /api/cases/{id}/payments — paymentSchema: amount (positive), method?
+ * Valid methods (others silently fall back to CASH server-side): CASH,
+ * CHECK, CARD, BANK_TRANSFER.
+ */
+data class CreatePaymentRequest(
+    val amount: Double,
+    val method: String? = null
 )
 
 // ─── CHAMBER ───────────────────────────────────────────────────────────────────
@@ -286,6 +301,35 @@ data class Invitation(
 data class CreateInvitationRequest(
     val email: String,
     val role: String = "MEMBER"         // ADMIN | MEMBER
+)
+
+// ─── CHAMBER MESSAGES ────────────────────────────────────────────────────────
+
+/** Nested `user` select on GET/POST /api/chambers/messages: { id, name, role } */
+data class ChamberMessageAuthor(
+    val id: String,
+    val name: String,
+    val role: String
+)
+
+/**
+ * Prisma ChamberMessage: id, chamberId, userId, content, createdAt, updatedAt
+ * GET /api/chambers/messages → List<ChamberMessage>, oldest first, capped at 50
+ * POST /api/chambers/messages → ChamberMessage
+ */
+data class ChamberMessage(
+    val id: String,
+    val chamberId: String,
+    val userId: String,
+    val content: String,
+    val user: ChamberMessageAuthor? = null,
+    val createdAt: String? = null,
+    val updatedAt: String? = null
+)
+
+/** POST /api/chambers/messages — messageSchema: content (1-2000 chars) */
+data class ChamberMessageRequest(
+    val content: String
 )
 
 // ─── NOTIFICATIONS ─────────────────────────────────────────────────────────────

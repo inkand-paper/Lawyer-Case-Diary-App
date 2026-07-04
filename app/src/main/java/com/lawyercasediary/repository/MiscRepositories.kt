@@ -133,6 +133,21 @@ class ChamberRepository(private val apiService: ApiService) {
             else ApiResult.Error(response.code(), response.parsedErrorMessage(response.message()))
         } catch (e: Exception) { ApiResult.Error(-1, e.message ?: "Network Error") }
     }
+
+    suspend fun getMessages(): ApiResult<List<ChamberMessage>> {
+        return try {
+            val response = apiService.getChamberMessages()
+            if (response.isSuccessful && response.body()?.success == true)
+                ApiResult.Success(response.body()!!.data ?: emptyList())
+            else ApiResult.Error(response.code(), response.parsedErrorMessage(response.message()))
+        } catch (e: Exception) { ApiResult.Error(-1, e.message ?: "Network Error") }
+    }
+
+    suspend fun sendMessage(content: String): ApiResult<ChamberMessage> {
+        return try {
+            safeExtract(apiService.sendChamberMessage(ChamberMessageRequest(content)), "Failed to send message.")
+        } catch (e: Exception) { ApiResult.Error(-1, e.message ?: "Network Error") }
+    }
 }
 
 // ─── NOTIFICATION REPOSITORY ──────────────────────────────────────────────────
